@@ -1,5 +1,6 @@
 stages:
   - test
+  - version
   - release
 
 variables:
@@ -29,9 +30,9 @@ unit_tests:
       - vendor/
     expire_in: 1h
 
-release:
-  stage: release
-  image: composer:2
+define_version:
+  stage: version
+  image: alpine:3.18
   rules:
     - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
       when: on_success
@@ -39,22 +40,66 @@ release:
   script:
     - chmod +x script/calculate_tag.sh
     - version="$(script/calculate_tag.sh)"
-    - tag="v${version}"
+    - tag="$version"
+    - echo "$version" > version.txt
     - |
-      tag_response=$(curl --silent --show-error --write-out "%{http_code}" --output /tmp/tag_response.txt \
-        --request POST "$CI_API_V4_URL/projects/$CI_PROJECT_ID/repository/tags" \
-        --header "JOB-TOKEN: $CI_JOB_TOKEN" \
-        --form "tag_name=${tag}" \
-        --form "ref=${CI_COMMIT_SHA}")
-      if [ "$tag_response" = "201" ]; then
-        echo "Created Git tag ${tag}"
-      elif [ "$tag_response" = "409" ]; then
+      git config --global user.email "gitlab@${CI_PROJECT_NAMESPACE}.gitlab.com"
+      git config --global user.name "GitLab CI"
+    - |
+      remote="https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git"
+      if git rev-parse "$tag" >/dev/null 2>&1; then
         echo "Tag ${tag} already exists"
       else
-        echo "Failed to create tag ${tag} (HTTP ${tag_response})"
-        cat /tmp/tag_response.txt
-        exit 1
+        git tag "$tag"
+        git push "$remote" "$tag"
       fi
+  artifacts:
+    paths:
+      - version.txt
+    expire_in: 1h
+
+release-production:
+  stage: release
+  image: alpine:3.18
+  needs:
+    - job: define_version
+      artifacts: true
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+      when: on_success
+    - when: never
+  script:
+    - apk add --no-cache curl
+    - |
+      curl -L -o /usr/local/bin/release-cli \
+        "https://gitlab.com/api/v4/projects/gitlab-org%2Frelease-cli/packages/generic/release-cli/latest/release-cli-linux-amd64"
+    - chmod +x /usr/local/bin/release-cli
+    - APP_VERSION=$(cat version.txt)
+    - POST_TAG="$APP_VERSION"
+    - |
+      ASSETS_JSON="{\"name\":\"$CI_REGISTRY_IMAGE:$APP_VERSION\",\"url\":\"https://$CI_REGISTRY_IMAGE:$APP_VERSION\",\"type\":\"image\"}"
+      release-cli create \
+        --name "Release $APP_VERSION" \
+        --tag-name "$POST_TAG" \
+        --ref "$CI_COMMIT_SHA" \
+        --assets-link "$ASSETS_JSON"
+  environment:
+    name: production
+
+publish-bundle:
+  stage: release
+  image: composer:2
+  needs:
+    - job: release-production
+      artifacts: false
+    - job: define_version
+      artifacts: true
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+      when: on_success
+    - when: never
+  script:
+    - version=$(cat version.txt)
     - mkdir -p build
     - composer archive --dir=build --filename="notifuse-symfony-bundle-${version}" --format=zip
     - |
