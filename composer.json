@@ -1,5 +1,5 @@
 {
-  "name": "notifuse/notifuse-symfony-bundle",
+  "name": "obsidiane/notifuse-symfony-bundle",
   "description": "Symfony bundle that integrates the Notifuse API and notification center",
   "type": "symfony-bundle",
   "license": "MIT",
