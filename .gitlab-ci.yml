@@ -87,7 +87,9 @@ publish-bundle:
     - when: never
   script:
     - mkdir -p build
-    - composer archive --dir=build  --format=zip
+    - composer archive --dir=build --format=zip
+    - ZIP_FILE="$(ls build/*.zip | head -n 1)"
+    - mv "$ZIP_FILE" "build/notifuse-symfony-bundle-${APP_VERSION}.zip"
     - |
       curl --request POST "$CI_API_V4_URL/projects/$CI_PROJECT_ID/packages/composer" \
         --header "JOB-TOKEN: $CI_JOB_TOKEN" \
