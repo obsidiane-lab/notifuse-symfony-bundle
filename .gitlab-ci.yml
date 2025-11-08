@@ -33,7 +33,7 @@ unit_tests:
 define-version-app:
   stage: prepare
   script:
-    - chmod +x /script/calculate_tag.sh
+    - chmod +x script/calculate_tag.sh
     - export APP_VERSION="$(./script/calculate_tag.sh | tr -d '\n')"
     - echo "APP_VERSION=$APP_VERSION" > version.env
   artifacts:
