@@ -32,49 +32,23 @@ unit_tests:
 
 define-version-app:
   stage: prepare
-  image: alpine:3.18
-  rules:
-    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
-      when: on_success
-    - when: never
   script:
-    - apk add --no-cache git
-    - chmod +x script/calculate_tag.sh
-    - export APP_VERSION="$(script/calculate_tag.sh | tr -d '\n')"
-    - |
-      if [ -n "${CI_COMMIT_TAG:-}" ]; then
-        export SDK_VERSION="$APP_VERSION"
-      else
-        export SDK_VERSION="${APP_VERSION}-ci.${CI_PIPELINE_IID}"
-      fi
+    - chmod +x /script/calculate_tag.sh
+    - export APP_VERSION="$(./script/calculate_tag.sh | tr -d '\n')"
     - echo "APP_VERSION=$APP_VERSION" > version.env
-    - echo "SDK_VERSION=$SDK_VERSION" >> version.env
-    - |
-      git config --global user.email "gitlab@${CI_PROJECT_NAMESPACE}.gitlab.com"
-      git config --global user.name "GitLab CI"
-    - |
-      remote="https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git"
-      if git rev-parse "$APP_VERSION" >/dev/null 2>&1; then
-        echo "Tag $APP_VERSION already exists"
-      else
-        git tag "$APP_VERSION"
-        git push "$remote" "$APP_VERSION"
-      fi
   artifacts:
     reports:
       dotenv: version.env
 
 release-production:
   stage: release
-  image: alpine:3.18
   needs:
     - job: define-version-app
       artifacts: true
   rules:
-    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
-      when: on_success
-    - when: never
+    - !reference [ .rules_prod_branch, rules ]
   script:
+    - echo "=== Installation gitlab release  ==="
     - apk add --no-cache curl
     - |
       curl -L -o /usr/local/bin/release-cli \
@@ -89,6 +63,7 @@ release-production:
         --assets-link "$ASSETS_JSON"
   environment:
     name: production
+
 
 publish-bundle:
   stage: release
