@@ -2,10 +2,8 @@ stages:
   - test
   - prepare
   - release
-
 variables:
   COMPOSER_MEMORY_LIMIT: -1
-
 cache:
   key: notifuse-bundle-vendor
   paths:
@@ -21,10 +19,6 @@ cache:
 unit_tests:
   <<: *test_template
   stage: test
-  rules:
-    - when: on_success
-      exists:
-        - composer.json
   artifacts:
     paths:
       - vendor/
@@ -71,7 +65,6 @@ release-production:
         --assets-link "$ASSETS_JSON"
   environment:
     name: production
-
 
 publish-bundle:
   stage: release
