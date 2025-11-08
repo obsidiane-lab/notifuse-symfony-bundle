@@ -1,6 +1,6 @@
 stages:
   - test
-  - version
+  - prepare
   - release
 
 variables:
@@ -30,8 +30,8 @@ unit_tests:
       - vendor/
     expire_in: 1h
 
-define_version:
-  stage: version
+define-version-app:
+  stage: prepare
   image: alpine:3.18
   rules:
     - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
@@ -39,30 +39,35 @@ define_version:
     - when: never
   script:
     - chmod +x script/calculate_tag.sh
-    - version="$(script/calculate_tag.sh)"
-    - tag="$version"
-    - echo "$version" > version.txt
+    - export APP_VERSION="$(script/calculate_tag.sh | tr -d '\n')"
+    - |
+      if [ -n "${CI_COMMIT_TAG:-}" ]; then
+        export SDK_VERSION="$APP_VERSION"
+      else
+        export SDK_VERSION="${APP_VERSION}-ci.${CI_PIPELINE_IID}"
+      fi
+    - echo "APP_VERSION=$APP_VERSION" > version.env
+    - echo "SDK_VERSION=$SDK_VERSION" >> version.env
     - |
       git config --global user.email "gitlab@${CI_PROJECT_NAMESPACE}.gitlab.com"
       git config --global user.name "GitLab CI"
     - |
       remote="https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git"
-      if git rev-parse "$tag" >/dev/null 2>&1; then
-        echo "Tag ${tag} already exists"
+      if git rev-parse "$APP_VERSION" >/dev/null 2>&1; then
+        echo "Tag $APP_VERSION already exists"
       else
-        git tag "$tag"
-        git push "$remote" "$tag"
+        git tag "$APP_VERSION"
+        git push "$remote" "$APP_VERSION"
       fi
   artifacts:
-    paths:
-      - version.txt
-    expire_in: 1h
+    reports:
+      dotenv: version.env
 
 release-production:
   stage: release
   image: alpine:3.18
   needs:
-    - job: define_version
+    - job: define-version-app
       artifacts: true
   rules:
     - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
@@ -74,13 +79,11 @@ release-production:
       curl -L -o /usr/local/bin/release-cli \
         "https://gitlab.com/api/v4/projects/gitlab-org%2Frelease-cli/packages/generic/release-cli/latest/release-cli-linux-amd64"
     - chmod +x /usr/local/bin/release-cli
-    - APP_VERSION=$(cat version.txt)
-    - POST_TAG="$APP_VERSION"
     - |
       ASSETS_JSON="{\"name\":\"$CI_REGISTRY_IMAGE:$APP_VERSION\",\"url\":\"https://$CI_REGISTRY_IMAGE:$APP_VERSION\",\"type\":\"image\"}"
       release-cli create \
         --name "Release $APP_VERSION" \
-        --tag-name "$POST_TAG" \
+        --tag-name "$APP_VERSION" \
         --ref "$CI_COMMIT_SHA" \
         --assets-link "$ASSETS_JSON"
   environment:
@@ -92,19 +95,18 @@ publish-bundle:
   needs:
     - job: release-production
       artifacts: false
-    - job: define_version
+    - job: define-version-app
       artifacts: true
   rules:
     - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
       when: on_success
     - when: never
   script:
-    - version=$(cat version.txt)
     - mkdir -p build
-    - composer archive --dir=build --filename="notifuse-symfony-bundle-${version}" --format=zip
+    - composer archive --dir=build --filename="notifuse-symfony-bundle-${APP_VERSION}" --format=zip
     - |
       curl --request POST "$CI_API_V4_URL/projects/$CI_PROJECT_ID/packages/composer" \
         --header "JOB-TOKEN: $CI_JOB_TOKEN" \
         --form "package[name]=notifuse/notifuse-symfony-bundle" \
-        --form "package[version]=${version}" \
-        --form "package[package_file]=@build/notifuse-symfony-bundle-${version}.zip"
+        --form "package[version]=${APP_VERSION}" \
+        --form "package[package_file]=@build/notifuse-symfony-bundle-${APP_VERSION}.zip"
