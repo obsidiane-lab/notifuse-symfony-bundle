@@ -79,9 +79,7 @@ You can fetch the script URL directly with `->getEmbedScriptUrl()` if you need t
 
 ## GitLab CI, Package Registry & Versioning
 
-A `.gitlab-ci.yml` file validates the bundle and publishes it to the GitLab Composer registry whenever a Git tag is pushed. The `release` job runs only on tags, creates a Composer archive, and uploads it to `GET /projects/:id/packages/composer` using the built-in `CI_JOB_TOKEN` (so no extra secrets need to be added). Tagging (`git tag v1.0.0 && git push --tags`) therefore drives both the published Composer package and the version exposed by the bundle.
-
-Versioning is derived straight from the Git tag; there is no separate `VERSION` file to maintain. `Notifuse\SymfonyBundle\PackageVersion::getVersion()` resolves the current tag via the `CI_COMMIT_TAG` environment variable (or `git describe` when running locally). This keeps runtime version and published version in sync with your Git history.
+The `.gitlab-ci.yml` pipeline now runs `composer validate` on every branch and, on the default branch, creates a new tag (computed by `script/calculate_tag.sh`) and uploads a Composer archive to the GitLab Composer registry via `POST /projects/:id/packages/composer`. That means you no longer have to tag manually—each push to the default branch causes a computed version to be published, and the bundle exposes the same version through `Notifuse\SymfonyBundle\PackageVersion::getVersion()` (which resolves the tag via `CI_COMMIT_TAG` or `git describe` locally).
 
 ## Testing and Quality
 
