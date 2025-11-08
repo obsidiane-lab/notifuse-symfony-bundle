@@ -39,7 +39,9 @@ define-version-app:
 release-production:
   stage: release
   image: alpine:3.20
-  needs: [ "define-version-app" ]
+  needs:
+    - job: define-version-app
+      artifacts: true
   rules:
     - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
       when: on_success
@@ -49,10 +51,6 @@ release-production:
     - curl -sSL -o /usr/local/bin/release-cli "https://gitlab.com/api/v4/projects/gitlab-org%2Frelease-cli/packages/generic/release-cli/latest/release-cli-linux-amd64"
     - chmod +x /usr/local/bin/release-cli
   script:
-    - echo "=== Création du tag & de la release ${APP_VERSION} ==="
-    - release-cli create \
-      --name "Release ${APP_VERSION}" \
-      --tag-name "${APP_VERSION}" \
-      --ref "$CI_COMMIT_SHA"
+    - release-cli create --name "Release ${APP_VERSION}" --tag-name "${APP_VERSION}" --ref "$CI_COMMIT_SHA"
   environment:
     name: production
