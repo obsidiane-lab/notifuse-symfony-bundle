@@ -46,7 +46,9 @@ release-production:
     - job: define-version-app
       artifacts: true
   rules:
-    - !reference [ .rules_prod_branch, rules ]
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+      when: on_success
+    - when: never
   script:
     - echo "=== Installation gitlab release  ==="
     - apk add --no-cache curl
