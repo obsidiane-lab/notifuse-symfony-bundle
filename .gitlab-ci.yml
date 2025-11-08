@@ -1,0 +1,48 @@
+stages:
+  - test
+  - release
+
+variables:
+  COMPOSER_MEMORY_LIMIT: -1
+
+cache:
+  key: notifuse-bundle-vendor
+  paths:
+    - vendor/
+
+.test_template: &test_template
+  image: composer:2
+  before_script:
+    - composer install --no-interaction --prefer-dist --no-progress
+  script:
+    - composer validate --strict
+
+unit_tests:
+  <<: *test_template
+  stage: test
+  rules:
+    - when: on_success
+      exists:
+        - composer.json
+  artifacts:
+    paths:
+      - vendor/
+    expire_in: 1h
+
+release:
+  stage: release
+  image: composer:2
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: on_success
+    - when: never
+  script:
+    - version="${CI_COMMIT_TAG#v}"
+    - mkdir -p build
+    - composer archive --dir=build --filename="notifuse-symfony-bundle-${version}" --format=zip
+    - |
+      curl --request POST "$CI_API_V4_URL/projects/$CI_PROJECT_ID/packages/composer" \
+        --header "JOB-TOKEN: $CI_JOB_TOKEN" \
+        --form "package[name]=notifuse/notifuse-symfony-bundle" \
+        --form "package[version]=${version}" \
+        --form "package[package_file]=@build/notifuse-symfony-bundle-${version}.zip"
