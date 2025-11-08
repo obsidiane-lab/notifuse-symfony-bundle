@@ -38,6 +38,7 @@ define-version-app:
       when: on_success
     - when: never
   script:
+    - apk add --no-cache git
     - chmod +x script/calculate_tag.sh
     - export APP_VERSION="$(script/calculate_tag.sh | tr -d '\n')"
     - |
