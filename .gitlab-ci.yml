@@ -2,10 +2,13 @@ stages:
   - test
   - prepare
   - release
+
 variables:
   COMPOSER_MEMORY_LIMIT: -1
+
 cache:
-  key: notifuse-bundle-vendor
+  key:
+    files: [composer.lock]
   paths:
     - vendor/
 
@@ -20,72 +23,37 @@ unit_tests:
   <<: *test_template
   stage: test
   artifacts:
-    paths:
-      - vendor/
+    paths: [vendor/]
     expire_in: 1h
 
 define-version-app:
   stage: prepare
+  image: alpine:3.20
   script:
     - chmod +x script/calculate_tag.sh
     - export APP_VERSION="$(./script/calculate_tag.sh | tr -d '\n')"
+    - echo "$APP_VERSION" | grep -Eq '^(v)?[0-9]+(\.[0-9]+){1,2}(-[0-9A-Za-z.-]+)?$' || { echo "Version invalide: $APP_VERSION"; exit 1; }
     - echo "APP_VERSION=$APP_VERSION" > version.env
   artifacts:
-    reports:
-      dotenv: version.env
+    reports: { dotenv: version.env }
 
 release-production:
   stage: release
-  needs:
-    - job: define-version-app
-      artifacts: true
+  image: alpine:3.20
+  needs: ["define-version-app"]
   rules:
     - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
       when: on_success
     - when: never
-  script:
-    - echo "=== Installation gitlab release  ==="
-    - |
-      if command -v apk >/dev/null 2>&1; then
-        apk add --no-cache curl
-      else
-        apt-get update -y
-        apt-get install -y curl
-      fi
-    - |
-      curl -L -o /usr/local/bin/release-cli \
-        "https://gitlab.com/api/v4/projects/gitlab-org%2Frelease-cli/packages/generic/release-cli/latest/release-cli-linux-amd64"
+  before_script:
+    - apk add --no-cache curl
+    - curl -sSL -o /usr/local/bin/release-cli "https://gitlab.com/api/v4/projects/gitlab-org%2Frelease-cli/packages/generic/release-cli/latest/release-cli-linux-amd64"
     - chmod +x /usr/local/bin/release-cli
-    - |
-      ASSETS_JSON="{\"name\":\"$CI_REGISTRY_IMAGE:$APP_VERSION\",\"url\":\"https://$CI_REGISTRY_IMAGE:$APP_VERSION\",\"type\":\"image\"}"
-      release-cli create \
-        --name "Release $APP_VERSION" \
-        --tag-name "$APP_VERSION" \
-        --ref "$CI_COMMIT_SHA" \
-        --assets-link "$ASSETS_JSON"
+  script:
+    - echo "=== Création du tag & de la release ${APP_VERSION} ==="
+    - release-cli create \
+      --name "Release ${APP_VERSION}" \
+      --tag-name "${APP_VERSION}" \
+      --ref "$CI_COMMIT_SHA"
   environment:
     name: production
-
-publish-bundle:
-  stage: release
-  image: composer:2
-  needs:
-    - job: release-production
-      artifacts: false
-    - job: define-version-app
-      artifacts: true
-  rules:
-    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
-      when: on_success
-    - when: never
-  script:
-    - mkdir -p build
-    - composer archive --dir=build --format=zip
-    - ZIP_FILE="$(ls build/*.zip | head -n 1)"
-    - mv "$ZIP_FILE" "build/notifuse-symfony-bundle-${APP_VERSION}.zip"
-    - |
-      curl --request POST "$CI_API_V4_URL/projects/$CI_PROJECT_ID/packages/composer" \
-        --header "JOB-TOKEN: $CI_JOB_TOKEN" \
-        --form "package[name]=notifuse/notifuse-symfony-bundle" \
-        --form "package[version]=${APP_VERSION}" \
-        --form "package[package_file]=@build/notifuse-symfony-bundle-${APP_VERSION}.zip"
