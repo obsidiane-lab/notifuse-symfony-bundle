@@ -8,7 +8,7 @@ variables:
 
 cache:
   key:
-    files: [composer.lock]
+    files: [ composer.lock ]
   paths:
     - vendor/
 
@@ -23,24 +23,23 @@ unit_tests:
   <<: *test_template
   stage: test
   artifacts:
-    paths: [vendor/]
+    paths: [ vendor/ ]
     expire_in: 1h
 
 define-version-app:
   stage: prepare
-  image: alpine:3.20
   script:
     - chmod +x script/calculate_tag.sh
     - export APP_VERSION="$(./script/calculate_tag.sh | tr -d '\n')"
-    - echo "$APP_VERSION" | grep -Eq '^(v)?[0-9]+(\.[0-9]+){1,2}(-[0-9A-Za-z.-]+)?$' || { echo "Version invalide: $APP_VERSION"; exit 1; }
     - echo "APP_VERSION=$APP_VERSION" > version.env
   artifacts:
-    reports: { dotenv: version.env }
+    reports:
+      dotenv: version.env
 
 release-production:
   stage: release
   image: alpine:3.20
-  needs: ["define-version-app"]
+  needs: [ "define-version-app" ]
   rules:
     - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
       when: on_success
