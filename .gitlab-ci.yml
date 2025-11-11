@@ -22,12 +22,20 @@ cache:
 unit_tests:
   <<: *test_template
   stage: test
+  rules:
+    - if: '$CI_COMMIT_TAG'
+      when: never
+    - when: on_success
   artifacts:
     paths: [ vendor/ ]
     expire_in: 1h
 
 define-version-app:
   stage: prepare
+  rules:
+    - if: '$CI_COMMIT_TAG'
+      when: never
+    - when: on_success
   script:
     - chmod +x script/calculate_tag.sh
     - export APP_VERSION="$(./script/calculate_tag.sh | tr -d '\n')"
@@ -74,3 +82,8 @@ publish-composer:
         --header "JOB-TOKEN: $CI_JOB_TOKEN" \
         --data "tag=${APP_VERSION}" \
         "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/composer"
+workflow:
+  rules:
+    - if: '$CI_COMMIT_TAG'
+      when: never
+    - when: always
