@@ -1,6 +1,6 @@
 <?php
 
-namespace Notifuse\SymfonyBundle\DependencyInjection;
+namespace Obsidiane\Notifuse\DependencyInjection;
 
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -15,12 +15,10 @@ final class NotifuseExtension extends Extension
         $config = $this->processConfiguration($configuration, $configs);
 
         $container->setParameter('notifuse.api_base_url', $config['api_base_url']);
-        $container->setParameter('notifuse.notification_center_url', $config['notification_center_url']);
         $container->setParameter('notifuse.workspace_id', $config['workspace_id']);
         $container->setParameter('notifuse.workspace_api_key', $config['workspace_api_key']);
-        $container->setParameter('notifuse.default_locale', $config['default_locale']);
         $container->setParameter('notifuse.http_client_options', $config['http_client_options']);
-        $container->setParameter('notifuse.notification_center', $config['notification_center']);
+        
 
         $loader = new YamlFileLoader($container, new FileLocator(__DIR__ . '/../Resources/config'));
         $loader->load('services.yaml');

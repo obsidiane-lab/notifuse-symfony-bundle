@@ -1,6 +1,6 @@
 <?php
 
-namespace Notifuse\SymfonyBundle;
+namespace Obsidiane\Notifuse;
 
 use Symfony\Component\HttpKernel\Bundle\Bundle;
 

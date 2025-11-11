@@ -4,16 +4,10 @@ services:
     autoconfigure: true
     public: false
 
-  Notifuse\SymfonyBundle\Service\ApiClient:
+  Obsidiane\Notifuse\Service\ApiClient:
     arguments:
       $apiBaseUrl: '%notifuse.api_base_url%'
       $workspaceId: '%notifuse.workspace_id%'
       $workspaceApiKey: '%notifuse.workspace_api_key%'
       $options: '%notifuse.http_client_options%'
 
-  Notifuse\SymfonyBundle\Service\NotificationCenterEmbedProvider:
-    arguments:
-      $notificationCenterUrl: '%notifuse.notification_center_url%'
-      $workspaceId: '%notifuse.workspace_id%'
-      $defaultLocale: '%notifuse.default_locale%'
-      $embedConfig: '%notifuse.notification_center%'

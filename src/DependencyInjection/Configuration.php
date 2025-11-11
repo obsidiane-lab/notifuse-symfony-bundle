@@ -1,6 +1,6 @@
 <?php
 
-namespace Notifuse\SymfonyBundle\DependencyInjection;
+namespace Obsidiane\Notifuse\DependencyInjection;
 
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
@@ -18,11 +18,6 @@ final class Configuration implements ConfigurationInterface
                     ->cannotBeEmpty()
                     ->defaultValue('https://localapi.notifuse.com:4000')
                 ->end()
-                ->scalarNode('notification_center_url')
-                    ->info('URL where the notification center assets are served')
-                    ->cannotBeEmpty()
-                    ->defaultValue('https://localapi.notifuse.com:4000')
-                ->end()
                 ->scalarNode('workspace_id')
                     ->info('Workspace identifier to scope requests')
                     ->isRequired()
@@ -32,10 +27,6 @@ final class Configuration implements ConfigurationInterface
                     ->info('API key / bearer token that the bundle sends with API calls')
                     ->isRequired()
                     ->cannotBeEmpty()
-                ->end()
-                ->scalarNode('default_locale')
-                    ->info('Locale that will be passed to the notification center embed')
-                    ->defaultValue('en')
                 ->end()
                 ->arrayNode('http_client_options')
                     ->addDefaultsIfNotSet()
@@ -61,19 +52,7 @@ final class Configuration implements ConfigurationInterface
                         ->end()
                     ->end()
                 ->end()
-                ->arrayNode('notification_center')
-                    ->addDefaultsIfNotSet()
-                    ->children()
-                        ->scalarNode('embed_path')
-                            ->info('Path against the notification center base URL to render the widget')
-                            ->defaultValue('/notification-center')
-                        ->end()
-                        ->scalarNode('script_element_id')
-                            ->info('ID attribute for the generated notification center <script> tag')
-                            ->defaultValue('notifuse-notification-center')
-                        ->end()
-                    ->end()
-                ->end()
+                
             ->end();
 
         return $treeBuilder;

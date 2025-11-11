@@ -1,6 +1,6 @@
 <?php
 
-namespace Notifuse\SymfonyBundle\Service\Exception;
+namespace Obsidiane\Notifuse\Exception;
 
 use Throwable;
 

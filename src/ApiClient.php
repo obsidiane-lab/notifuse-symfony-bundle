@@ -1,10 +1,10 @@
 <?php
 
-namespace Notifuse\SymfonyBundle\Service;
+namespace Obsidiane\Notifuse;
 
-use Notifuse\SymfonyBundle\Service\Exception\NotifuseClientException;
-use Symfony\Contracts\HttpClient\HttpClientInterface;
+use Obsidiane\Notifuse\Exception\NotifuseClientException;
 use Symfony\Contracts\HttpClient\Exception\ExceptionInterface;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 final class ApiClient
 {
