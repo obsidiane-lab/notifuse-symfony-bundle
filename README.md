@@ -183,7 +183,7 @@ $this->apiClient->request('GET', '/api/endpoint', [
 
 | Service ID | Class | Description |
 |------------|-------|-------------|
-| `Obsidiane\Notifuse\Service\ApiClient` | `Service\ApiClient` | Authenticated requests to the Notifuse API. |
+| `Obsidiane\Notifuse\ApiClient` | `Service\ApiClient` | Authenticated requests to the Notifuse API. |
 
 
 ## CI, Releases and Composer Registry

@@ -183,7 +183,7 @@ $this->apiClient->request('GET', '/api/endpoint', [
 
 ## Services
 
-- `Obsidiane\Notifuse\Service\ApiClient` : client HTTP authentifié vers l’API Notifuse.
+- `Obsidiane\Notifuse\ApiClient` : client HTTP authentifié vers l’API Notifuse.
 
 
 ## Tests

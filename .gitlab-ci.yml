@@ -79,12 +79,11 @@ publish-composer:
   script:
     - '[ -n "$PACKAGIST_USERNAME" ] || { echo "PACKAGIST_USERNAME non définie" >&2; exit 1; }'
     - '[ -n "$PACKAGIST_API_TOKEN" ] || { echo "PACKAGIST_API_TOKEN non définie" >&2; exit 1; }'
-    - 'REPO_URL="${CI_PROJECT_URL}.git"'
     - >
       curl --fail --show-error --location
       -X POST
       -H "Content-Type: application/json"
-      --data "{\"repository\":{\"url\":\"${REPO_URL}\"}}"
+      --data "{\"repository\":{\"url\":\"https://github.com/obsidiane-lab/notifuse-symfony-bundle.git\"}}"
       "https://packagist.org/api/update-package?username=${PACKAGIST_USERNAME}&apiToken=${PACKAGIST_API_TOKEN}"
 workflow:
   rules:

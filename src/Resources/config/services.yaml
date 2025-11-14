@@ -4,7 +4,7 @@ services:
     autoconfigure: true
     public: false
 
-  Obsidiane\Notifuse\Service\ApiClient:
+  Obsidiane\Notifuse\ApiClient:
     arguments:
       $apiBaseUrl: '%notifuse.api_base_url%'
       $workspaceId: '%notifuse.workspace_id%'
