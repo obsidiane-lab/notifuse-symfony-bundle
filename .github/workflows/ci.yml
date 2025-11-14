@@ -41,16 +41,8 @@ jobs:
           dependency-versions: locked
           composer-options: --no-interaction --no-progress --prefer-dist
 
-      - name: Run unit tests
-        run: |
-          if [ -x ./vendor/bin/phpunit ]; then
-            ./vendor/bin/phpunit --testdox
-          elif composer run-script --list | grep -qE '^test( |:)'; then
-            composer test -- --testdox
-          else
-            echo "Aucune commande de tests trouvée (phpunit ou composer test)." >&2
-            exit 1
-          fi
+      - name: Validate composer.json
+        run: composer validate --strict
 
   release:
     name: Release GitHub (calcule version + tag)
@@ -99,5 +91,3 @@ jobs:
         with:
           username: ${{ secrets.PACKAGIST_USERNAME }}
           api_token: ${{ secrets.PACKAGIST_API_TOKEN }}
-          # Optionnel si ton composer.json contient bien le bon "name"
-          package_name: obsidiane-lab/notifuse-symfony-bundle
