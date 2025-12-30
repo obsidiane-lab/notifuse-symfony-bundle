@@ -34,7 +34,13 @@ return [
 
 ## Configuration
 
-Exemple minimal (via variables d’environnement) :
+```
+###> obsidiane/notifuse-symfony-bundle ###
+NOTIFUSE_API_BASE_URL="https://localapi.notifuse.com:4000"
+NOTIFUSE_WORKSPACE_ID=""
+NOTIFUSE_API_KEY=""
+###< obsidiane/notifuse-symfony-bundle ###
+```
 
 ```yaml
 notifuse:
@@ -178,7 +184,7 @@ $this->apiClient->request('GET', '/api/endpoint', [
 
 ## Compatibilité
 
-- PHP : `^8.1`
+- PHP : `^8.0`
 - Symfony : `^6.4` ou `^7.0`
 
 ## Services

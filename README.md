@@ -34,7 +34,15 @@ return [
 
 ## Configuration
 
-Minimal configuration via environment variables:
+Recommended configuration workflow:
+
+```
+###> obsidiane/notifuse-symfony-bundle ###
+NOTIFUSE_API_BASE_URL="https://localapi.notifuse.com:4000"
+NOTIFUSE_WORKSPACE_ID=""
+NOTIFUSE_API_KEY=""
+###< obsidiane/notifuse-symfony-bundle ###
+```
 
 ```yaml
 notifuse:
@@ -176,7 +184,7 @@ $this->apiClient->request('GET', '/api/endpoint', [
 
 ## Compatibility
 
-- PHP: `^8.1`
+- PHP: `^8.0`
 - Symfony: `^6.4` or `^7.0`
 
 ## Services Summary
@@ -188,9 +196,9 @@ $this->apiClient->request('GET', '/api/endpoint', [
 
 ## CI, Releases and Composer Registry
 
-The pipeline validates the package on all branches and, on the default branch, computes a semantic version and creates a GitLab Release and tag. A separate job then notifies the GitLab Composer registry with the same version so consumers can install it via Composer.
+The pipeline validates the package on all branches. Releases are handled by GitHub Actions when pushing to `master` or when a tag is pushed.
 
-See `.gitlab-ci.yml` for job names and the exact flow (`define-version-app`, `release-production`, `publish-composer`).
+See `.github/workflows/ci.yml` and `.github/workflows/release.yml` for the exact flow.
 
 ## Testing
 

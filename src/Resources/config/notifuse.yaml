@@ -1,0 +1,9 @@
+notifuse:
+  api_base_url: '%env(resolve:NOTIFUSE_API_BASE_URL)%'
+  workspace_id: '%env(NOTIFUSE_WORKSPACE_ID)%'
+  workspace_api_key: '%env(NOTIFUSE_API_KEY)%'
+  http_client_options:
+    timeout: 10.0
+    max_redirects: 5
+    verify_peer: true
+    headers: { }
